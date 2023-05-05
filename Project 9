@@ -1,0 +1,157 @@
+#########################################################################################
+# Computer Project #7
+# Program asks user to input a file name that the program reads through
+#                                                                             
+# Then, user is asked to input a prefix. If they enter a prefix, then the program continues
+# to run. If they enter #, then the program qutis
+#
+# Once the prefix is entered, then the program outputs a list of words that have that 
+# prefix in it. 
+#
+# If they enter a prefix that doesnt exist, then the statement "There are no completions."
+#########################################################################################
+'''
+Main data structure is a dictionary
+   word_dic[(i,ch)] = set of words with ch at index i
+'''
+import string
+
+def open_file():
+    '''
+    The open_file function takes one parameter, a string 's' and opens the 
+    file in order to extract the information within the file
+    Parameters
+    ----------    
+    
+    Returns
+    -------
+    fp: returns a file pointer that opens one of the inputted files by the user
+
+    '''
+    while True:
+        fileName = input("\nInput a file name: ")
+        try:
+            fp = open(fileName, 'r',  encoding = "utf-8")
+            return fp
+        except FileNotFoundError:
+            print("\n[Error]: no such file")
+ 
+
+def read_file(fp):
+    '''
+    The read_file function goes through and reads the information that was extracted  
+    by the open file function
+    
+    Parameters
+    ----------
+    fp_games: an opened file, from which the read file function will be reading
+    information
+
+    Returns
+    -------
+    empty_set: returns a dictionary with a nested list that has all of the information
+    in the file that the user opened
+
+    '''
+    empty_set = set()
+    for word in fp:
+        word1 = word.strip().split() #strips and splits each word
+        for letter in word1: #iterates through each letter
+            new_letter = letter.lower().strip(string.punctuation) #makes each letter lowercase and gets rid of the punctuation in each letter
+            if new_letter.isalpha() and len(new_letter) > 1: #runs if the letter is an alphabet and if the length of the word is longer than 1
+                empty_set.add(new_letter)
+    return empty_set
+
+def fill_completions(words):
+    '''
+    This function takes a set of words and returns a dictionary whose keys are tuples and the values are
+    sets. It returns the completion dictionary with keys that have the index value of each charater, and then
+    a value with words with that specifc character.
+
+    Parameters
+    -----------
+
+    words: words is a list that the takes a list of words
+
+    Returns:
+    ----------
+    dic: is a dictionary of words with index and a character as its key and 
+    a list of words that have the specifc character from the list 
+    '''
+    dic = {} #keys are tuples, values are sets
+    for word in words:
+        for index, ch in enumerate(word):
+            tup = (index, ch) #the index value of each character in word; the key for the dictionary
+            if tup in dic: #checks to see if the tup is already in the dictionary
+                dic[tup].add(word) #adds the word to the key 'tup' if tup is in the dictionary
+            else: #runs if tup is not already in the dictionary
+                dic_value = set()
+                dic_value.add(word)
+                dic[tup] = dic_value
+    return dic
+
+def find_completions(prefix,word_dic):
+    '''
+    This function takes a prefix of a word (possibly empty) and a completions dictionary of the form
+    described above in fill_completions (word_D). It returns the set of words in the completions dictionary 
+    that complete the prefix, if any. If the prefix cannot be completed to any vocabulary words, the function
+    returns the empty set.
+
+    Parameters
+    -----------
+
+    prefix: a user-entered prefix
+    word_dic: the dictionary  that's returned in fill_completions
+
+    Returns:
+    ----------
+    final_s: set of words in the completions dictionary that complete the prefix
+
+    '''
+    if prefix != '':
+        start = (0, prefix[0]) #allows for comparison when comparing with first index, 0, and first character
+        try:
+            final_s = word_dic[start] #gets the value at the key 
+        except:
+            return set() #if there is no value in the dictionary, then we return an empty set
+        
+        for i, ch in enumerate(prefix): 
+            tup = (i, ch)
+            if tup in word_dic: #if the tuple, which is the key in the dictionary, is in word_dic
+                words = word_dic[tup] #get the first word, or the value, that corresponds with that key 
+                final_s = final_s.intersection(words) #find the overlapping words that are in each individual dictionary that corresponds with the indexing of the prefix inputted 
+        return final_s 
+    
+    else:
+        return set()
+
+def main():    
+    open_f = open_file() #open file variable
+    read_f = read_file(open_f) #read file variable
+    fill_comp = fill_completions(read_f)
+    user_word = input("\nEnter a prefix (# to quit): ")
+    
+    while user_word != '#':
+        
+        if user_word == "": #runs if the user inputs a space when prompted for a prefix
+            print("\nThere are no completions.")
+        
+        else:
+            if fill_comp: #runs if the fill_comp runs true
+                find_comp = sorted(find_completions(user_word, fill_comp)) #sorts find_comp in alphabetical order
+                
+                if find_comp: #runs if the inputs for find_comp are valid
+                    comma = ', '.join(find_comp) #adds a comma and space after each value in your find_comp
+                    print("\nThe words that completes {} are: {}".format(user_word, comma))
+                else:
+                    print("\nThere are no completions.") #prints if find_comp runs false, where the input is not a proper prefix
+        
+        user_word = input("\nEnter a prefix (# to quit): ")
+    
+    else:
+        print("\nBye")
+        
+
+if __name__ == '__main__':
+    main()
+
