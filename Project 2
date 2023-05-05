@@ -1,0 +1,135 @@
+
+###########################################################
+#  Computer Project #2
+# Algorithm that computes and displays information for a company 
+# that rents cars to customers/players in a game. Algorithm starts
+# by asking for user inuput for odometer reading before and after use 
+# of car. Then, after user allows algorithm to run, while loop is run
+# to determine the total driven miles and the total amount the 
+# customer/player owes the rental company
+###########################################################
+
+BANNER = "\nWelcome to Horizons car rentals. \
+\n\nAt the prompts, please enter the following: \
+\n\tCustomer's classification code (a character: BD, D, W) \
+\n\tNumber of days the vehicle was rented (int)\
+\n\tOdometer reading at the start of the rental period (int)\
+\n\tOdometer reading at the end of the rental period (int)"
+
+PROMPT = '''\nWould you like to continue (A/B)? '''
+
+"\nCustomer code (BD, D, W): "
+"\n\t*** Invalid customer code. Try again. ***"
+"\nCustomer code (BD, D, W): "
+"\nNumber of days: "
+"\nOdometer reading at the start: "
+"\nOdometer reading at the end:   "    
+"\n\nCustomer summary:"
+"\tclassification code:"
+"\trental period (days):"
+"\todometer reading at start:"
+"\todometer reading at end:  "
+"\tnumber of miles driven: "
+"\tamount due: $"
+"\nThank you for your loyalty."
+
+import math
+print(BANNER) 
+PROMPT1 = input(PROMPT)
+totalMiles = 0 #value for total miles
+amountDue = 0 #amount the customer/player owes the rental company
+baseCharge = 0 #the base charge for each specifc to each customer code
+extraMiles= 0 #the numeber of extra miles traveled by customer/player with respect to the each customer code guidelines
+avgMiles = 0 #the average number of miles traveled by the customer/player with respect to each customer code guidelines
+
+while PROMPT1 == "A" :
+    customerAnswer = input("\nCustomer code (BD, D, W): ") #user input for whether the classification code is budget (BD), daily (D) or weekly (W)
+    while customerAnswer != 'BD' and customerAnswer != 'D' and customerAnswer != 'W':
+        print("\n\t*** Invalid customer code. Try again. ***")
+        customerAnswer = input("\nCustomer code (BD, D, W): ")
+    #if customer's classification code is BD
+    if customerAnswer == "BD":
+        daysRented = int(input("\nNumber of days: ")) # how many days the car was rented for              
+        startMiles = int(input("\nOdometer reading at the start: ")) 
+        endMiles = int(input("\nOdometer reading at the end:   " ))
+        print("\n\nCustomer summary:")
+        print("\tclassification code:", customerAnswer)
+        print("\trental period (days):", daysRented)
+        print("\todometer reading at start:", startMiles)
+        print("\todometer reading at end:  ", endMiles)
+        #calculation if the end miles is larger than the start miles
+        if startMiles < endMiles:
+            totalMiles = (endMiles - startMiles) / 10
+            print("\tnumber of miles driven: ", totalMiles)
+            amountDue = float((40 * daysRented) + (0.25 * totalMiles))
+            print("\tamount due: $", amountDue)
+        else:
+            startMiles = 1000000 - startMiles 
+            totalMiles = startMiles + endMiles
+            totalMiles /= 10 
+            print("\tnumber of miles driven: ", totalMiles)
+            amountDue = float((40 * daysRented) + (0.25 * totalMiles))
+            print("\tamount due: $", amountDue)
+    #if the customer's classification code was daily (D)
+    if customerAnswer == "D":
+        daysRented = int(input("\nNumber of days: "))                   
+        startMiles = int(input("\nOdometer reading at the start: ")) 
+        endMiles = int(input("\nOdometer reading at the end:   "  ))
+        print("\n\nCustomer summary:")
+        print("\tclassification code:", customerAnswer)
+        print("\trental period (days):", daysRented)
+        print("\todometer reading at start:", startMiles)
+        print("\todometer reading at end:  ", endMiles)
+        if endMiles > startMiles: 
+            totalMiles = (endMiles - startMiles)/10
+            print("\tnumber of miles driven: ", totalMiles)
+        else:
+            startMiles = 1000000 - startMiles 
+            totalMiles = startMiles + endMiles
+            totalMiles /= 10 
+            print("\tnumber of miles driven: ", totalMiles)
+        avgMiles = totalMiles / daysRented
+        #if the average miles was less than or equal to 100 
+        if avgMiles <= 100:
+            baseCharge = 60 * daysRented
+            amountDue = float(baseCharge)
+            print("\tamount due: $", amountDue)
+        #if the average miles was more than 100
+        else: 
+            baseCharge = 60 * daysRented
+            extraMiles = avgMiles - 100 
+            amountDue = (60 * daysRented) + (0.25 * (extraMiles*daysRented))
+            print("\tamount due: $", amountDue)
+    #if the customer's classification code was weekly (W)
+    if customerAnswer == "W":
+        daysRented = int(input("\nNumber of days: "))                   
+        startMiles = int(input("\nOdometer reading at the start: ")) 
+        endMiles = int(input("\nOdometer reading at the end:   " ))
+        print("\n\nCustomer summary:")
+        print("\tclassification code:", customerAnswer)
+        print("\trental period (days):", daysRented)
+        print("\todometer reading at start:", startMiles)
+        print("\todometer reading at end:  ", endMiles)
+        totalMiles = (endMiles - startMiles) / 10    
+        totalWeeks = math.ceil(daysRented / 7)
+        baseCharge = 190 * totalWeeks
+        avgMiles = totalMiles / totalWeeks
+        #if the average miles was less than or equal to 900
+        if avgMiles <= 900:
+            print("\tnumber of miles driven: ", totalMiles)
+            amountDue = float(baseCharge)
+            print("\tamount due: $", amountDue)
+        #if the average miles was less than 900 but more than or equal to 1500
+        elif 900 < avgMiles <= 1500:
+            print("\tnumber of miles driven: ", totalMiles)
+            amountDue = float(baseCharge + (100 * totalWeeks))
+            print("\tamount due: $", amountDue)
+        #if the average miles was more than 1500
+        else:
+            print("\tnumber of miles driven: ", totalMiles)
+            amountDue = float(baseCharge + ((200 * totalWeeks) + (0.25*(totalMiles - (1500 * totalWeeks)))))
+            print("\tamount due: $", amountDue)
+    #asking if the user would like to add another charge calculation
+    PROMPT1 = input('''\nWould you like to continue (A/B)? ''')
+
+print("\nThank you for your loyalty.")
