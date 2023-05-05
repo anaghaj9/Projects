@@ -1,0 +1,390 @@
+#################################
+# Computer Project #6
+# Program prompts user to chose an option from the Menu, 1-4
+#                                                                             
+# If the user choses option 1, then user is asking to find a book
+# when inputting a title. Once title is inputted in, then the book
+# details, including the ISBN-13, Title, Author(s), Year, Rating, 
+# page numbers, and number of ratings is printed out
+#
+# If the user choses option 2, user is asking to filter through a list
+# of books when inputting certain criteria. They are then prompted to 
+# chose a number 3,5,6 or 7 to pick what criteria they would like to use
+# to filter through the list of books to find books. Option 3 is by book
+# category. Option 5 is by published year. Option 6 is the books average rating
+# or a rating higher. Option 7 is the number of pages, within a 50 limit. Then,
+# based on the criteria, a list of books are printed out.
+#
+# If the user choses option 3, then the user is asking for the program to recommend a
+# book. They are then asked for thier desired category, desired rating, desired page
+# number, asked to enter 1 for A-Z sorting, 2 for Z-A author last name sorting, and 
+# for keywords. With all of these parameters, books are listed out that fit these 
+# descriptions.
+#
+# If the user choses option 4, then the program quits running. 
+#
+# If user doesn't input an option 1-4, then program will output an error message
+# asking user to input another value 
+#################################
+
+import csv
+from operator import itemgetter
+
+TITLE = 1
+CATEGORY = 3
+YEAR = 5
+RATING = 6
+PAGES = 7
+
+MENU = "\nWelcome to the Book Recommendation Engine\n\
+        Choose one of below options:\n\
+        1. Find a book with a title\n\
+        2. Filter books by a certain criteria\n\
+        3. Recommend a book \n\
+        4. Quit the program\n\
+        Enter option: "
+
+CRITERIA_INPUT = "\nChoose the following criteria\n\
+                 (3) Category\n\
+                 (5) Year Published\n\
+                 (6) Average Rating (or higher) \n\
+                 (7) Page Number (within 50 pages) \n\
+                 Enter criteria number: "
+
+TITLE_FORMAT = "{:15s} {:35s} {:35s} {:6s} {:8s} {:15s} {:15s}"
+TABLE_FORMAT = "{:15s} {:35s} {:35s} {:6s} {:<8.2f} {:<15d} {:<15d}"
+
+def open_file():
+    '''
+    Returns
+    -------
+    fp: fp is a variable that hold the information in the inputed file name 
+    by the user. fp is within the try-except function, where the program will
+    run the try, and if it doesn't work, then instead of outputting an syntax
+    error, the program will run the expect condition
+    '''
+    while True:
+        fileName = input("Enter file name: ")
+        try:
+            fp = open(fileName, 'r',  encoding = "utf-8")
+            return fp
+        except FileNotFoundError:
+            print("\nError opening file. Please try again.")
+    pass
+
+def read_file(fp):
+    '''
+    Parameters
+    ----------
+    fp: fp is a variable that hold the information in the inputed file name 
+    by the user. fp is within the try-except function, where the program will
+    run the try, and if it doesn't work, then instead of outputting an syntax
+    error, the program will run the expect condition
+    
+    Returns
+    -------
+    empty_list: empty list is the variable that holds all of the data of fp in it.
+    Information is added to the empty list variable, which is then called in the main function
+    
+    '''
+    empty_list = []
+    read = csv.reader(fp)
+    next(read)
+    for line in read:
+        try:
+            isbn13 = line[0]
+            title = line[2]
+            authors = line[4]
+            categories = line[5].lower().split(',')
+            descrptions = line[7]
+            year = line[8]
+            rating = float(line[9])
+            num_pages = int(line[10])
+            num_ratings = int(line[11])
+            empty_list.append((isbn13, title, authors, categories, descrptions, year, rating, num_pages, num_ratings))
+        except:
+            continue 
+    return empty_list
+    
+def get_books_by_criterion(list_of_tuples, criterion, value):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: list of tuples is a varuable that holds a list of books 
+                    inputted by the user 
+    criterion: criterion is a parameter that's inputted an int that represents 
+               the index of a criterion in a book tuple. 
+    value: integer is a parameter that takes an integer, float, or string. If 
+           the user enters category for thier criterion, then the value would be
+           a genre. If the user enters year for their criterion, then the value
+           would be a string where the returned books should've been published
+           within the given value. If the user enters rating as their criterion, 
+           then value would be a float. If the user entered pages for their
+           criterion, then value would be an integer. 
+    Returns
+    -------
+    What's returned is a list of books that are filtered from the master list of
+    books, list_of_tuples, by the criterion and value inputted by the user. 
+    If criterion = category, then value is a string. 
+    If criterion = rating,  then value is a float
+    If criterion = pages, then value is an integer
+    If criterion = year, then value i a string. 
+
+    '''
+    list1 = []
+    for num in list_of_tuples:
+        if criterion == TITLE :
+            if num[criterion].lower() == value.lower():
+                return num
+        
+        elif criterion == CATEGORY:
+            if value.lower() in num[criterion]:
+                list1.append(num)
+        
+        elif criterion == YEAR:
+            if num[criterion].lower() == value.lower():
+                list1.append(num)
+        
+        elif criterion == RATING:
+            if num[criterion] >= float(value):
+                list1.append(num)
+            
+        elif criterion == PAGES:
+            if num[criterion] >= int(value) - 50 and num[criterion] <= int(value) + 50:
+                list1.append(num)
+            
+    return list1
+
+def get_books_by_criteria(list_of_tuples, category, rating, page_number):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: list of tuples is a varuable that holds a list of books 
+                    inputted by the user
+    category: category is variable that takes a string, which is defined as the 
+              category of books that the user 
+    rating: rating is taken as a float and is the rating of the book that the 
+            user is looking up
+    page_number: page number is the number of pages within the book.
+
+    Returns
+    -------
+    page1: page1 is a variable that holds a function that gets the books within 
+           the category, the rating, and pages parameters set by the user
+
+    '''
+    category = get_books_by_criterion(list_of_tuples, CATEGORY, category)
+    rating = get_books_by_criterion(category, RATING, rating)
+    page1 = get_books_by_criterion(rating, PAGES, page_number)
+    return page1
+
+
+def get_books_by_keyword(list_of_tuples, keywords):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: list of tuples is a varuable that holds a list of books 
+                    inputted by the user
+                    
+    keywords: keywords is a string variable where the user input keywords that 
+              helps the program look for books quicker
+
+    Returns
+    -------
+    empty_list1: a list full of books whose titles include inputted keywords
+
+    '''
+    empty_list1 = []
+    for book in list_of_tuples:
+        des1 = book[4].lower()
+        for word in keywords:
+            if word.lower() in des1:
+                empty_list1.append(book)
+                break
+    return empty_list1
+
+def sort_authors(list_of_tuples, a_z=True):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: list of tuples is a varuable that holds a list of books 
+                    inputted by the user
+                    
+    a_z :  The a_z boolean value determines if you should return the books in 
+          descending (when a_z is False) or ascending order (whena_z is True) 
+          based on author name. The default is True.
+
+    Returns
+    -------
+    What's returned is a new list where books are sorted by author names
+
+    '''
+    return sorted(list_of_tuples, key = itemgetter(2), reverse = not a_z)
+
+
+def recommend_books(list_of_tuples, keywords, category, rating, page_number,  a_z):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: list of tuples is a variable that holds a list of books 
+                    inputted by the user
+                    
+    keywords: keywords is a string variable where the user input keywords that 
+              helps the program look for books quicker
+              
+    category: category is variable that takes a string, which is defined as the 
+              category of books that the user
+              
+    rating: rating is taken as a float and is the rating of the book that the 
+            user is looking up
+            
+    page_number: page number is the number of pages within the book.
+
+    a_z :  The a_z boolean value determines if you should return the books in 
+          descending (when a_z is False) or ascending order (whena_z is True) 
+          based on author name. The default is True.
+
+    Returns
+    -------
+    c3: sorts authors after getting books within a specific rating, category,
+    page number or also after searching for books through entering key words
+
+    '''
+    c1 = get_books_by_criteria(list_of_tuples, category, rating, page_number)
+    c2 = get_books_by_keyword(c1, keywords)
+    c3 = sort_authors(c2, a_z)
+    return c3
+
+def display_books(list_of_tuples):
+    '''
+    Parameters
+    ----------
+    list_of_tuples: a list that takes a list of books, inputted by the user
+
+    Returns
+    -------
+    None, but prints the formatted title and table of book title, thie ISBN-13,
+    the author, published year, rating, number of pages, and rating of the book.
+
+    '''
+    print("\nBook Details:")
+    if list_of_tuples == []:
+        print("Nothing to print.")
+    else:
+        print(TITLE_FORMAT.format('ISBN-13', 'Title', 'Authors', 'Year', 'Rating', 'Number Pages' , 'Number Ratings' ))
+        for books in list_of_tuples:
+            if len(books[1]) <= 35 and len(books[2]) <= 35:
+                print(TABLE_FORMAT.format(books[0], books[1], books[2], books[5], books[6], books[7], books[8]))
+
+def get_option():
+    '''
+    Returns
+    -------
+    option: is a variable that takes an integer between 1 and 4 inclusive, where
+            1 = Find a book with a title, 2 = Filter books by a certain criteria
+            3 = Recommend a book and 4 = Quit the program
+    '''
+    try:
+        option = int(input(MENU))
+        if 1 <= option <= 4:
+            return option
+    except:
+        pass
+    
+    print("\nInvalid option")
+    return None
+
+
+def main():
+    open_f = open_file()
+    read_f = read_file(open_f)
+    get = get_option()
+    
+    while True:
+
+        # code function for option 1
+        if get == 1:
+            value1 = input("\nInput a book title: ")
+            data = get_books_by_criterion(read_f, TITLE, value1)
+            if data == []:
+                display_books(data)
+            else:
+                display_books([data])
+        
+        # code function for option 2
+        elif get == 2:
+            crit_num = None
+            while True:
+                try:
+                    crit_num = int(input(CRITERIA_INPUT))
+                    if crit_num != 3 and crit_num != 5 and crit_num != 6 and crit_num != 7:
+                        print("\nInvalid input")
+                        continue
+                    else:
+                        break
+                except:
+                    print("\nInvalid input")
+            value = None
+            if crit_num == RATING or crit_num == PAGES:
+                while True:
+                    try:
+                        value = float(input("\nEnter value: "))
+                        break
+                    except:
+                        print("\nInvalid input")         
+            else:     
+                value = input("\nEnter value: ")
+            
+            filter_ch = get_books_by_criterion(read_f, crit_num, value)
+            sort1 = sort_authors(filter_ch, True)
+            display_books(sort1[0:len(sort1) if len(sort1) < 30 else 30])
+        
+        # code function for option 3
+        elif get == 3:
+            category = input("\nEnter the desired category: ")
+            rating1 = input("\nEnter the desired rating: ")
+            page_num = input("\nEnter the desired page number: ")
+            a_zin = input("\nEnter 1 for A-Z sorting, and 2 for Z-A sorting: ")
+
+            while True:
+                try:
+                    rating1 = float(rating1)
+                    break
+                except:
+                    print("\nInvalid input")
+                    rating1 = input("\nEnter the desired rating: ")
+            
+            while True:
+                try:
+                    page_num = int(page_num)
+                    break
+                except:
+                    print("\nInvalid input")
+                    page_num = input("\nEnter the desired page number: ")
+            
+            if a_zin == '1':
+                a_zin = True
+            else:
+                a_zin = False
+            
+            keywords1 = input("\nEnter keywords (space separated): ").split()
+
+            rec_books = recommend_books(read_f, keywords1, category, rating1, page_num, a_zin)
+            display_books(rec_books)
+
+        # code function for option 4
+        elif get == 4:
+            break
+        get = get_option()
+        
+
+
+# DO NOT CHANGE THESE TWO LINES
+# These two lines allow this program to be imported into other code
+# such as our function_test code allowing other functions to be run
+# and tested without 'main' running.  However, when this program is
+# run alone, 'main' will execute.
+if __name__ == "__main__":
+    main()
+
+    
