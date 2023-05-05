@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#################################
+# Computer Project #4
+# Program prompts user to chose an option from the Banner, 1-3
+#                                                                             
+# If the user choses option 1, then user is prompted to input a file name
+# Program will then output the anime with the highest score, and the name of it
+# Program will also output anime with highest episode count, and the name of it
+# Program will also output anime with lowest score, and the name of it
+# At the end of program, it wil output the average score for all of the anime 
+# in the file 
+#
+# If the user choses option 2, user is prompted to input a file name 
+# And, they are prompted to input the title of an anime
+# Program then outputs all of the anime titles with the name that user inputed
+# Along with the season which the anime was released
+#
+# If the user choses option 3, program will print out a statement thanking the
+# user for using the program
+#
+# If user doesn't input an option 1-3, then program will output an error message
+# asking user to input another value 
+#################################
+def open_file():
+    '''
+    Returns
+    -------
+    fp : fp is a variable that hold the information in the inputed file name 
+    by the user. fp is within the try-except function, where the program will
+    run the try, and if it doesn't work, then instead of outputting an syntax
+    error, the program will run the expect condition
+    '''
+    while True:
+        fileName = input("\nEnter filename: ")
+        try:
+            fp = open(fileName, 'r',  encoding = "utf-8")
+            return fp
+        except FileNotFoundError:
+            print("\nFile not found!")
+        
+    
+def find_max(num, name, max_num, max_name):
+    '''
+    Parameters
+    ----------
+    num: num is an integer value that's the score value of the anime
+    
+    name: name is a string value, which represents the name of the anime
+    
+    max_num: max_num is the maximum, highest scoring title 
+    
+    max_name: max_name is the name of the anime with the higest scoring title
+    
+    Returns
+    -------
+    The program returns the max num and title of the anime if the max. scoring
+    title is larger than score value of the anime
+    
+    The program returns the score value of the anime if the the score is larger
+    than the highest scoring title 
+    
+    The program returns the highest scoring title, if every other if, and elif
+    statement run as false
+
+    '''
+    if num < max_num:
+        return max_num, max_name
+    elif num > max_num:
+        return num, "\n\t{}".format(name)
+    else:
+        return max_num, "{}\n\t{}".format(max_name, name)
+    
+def find_min(num, name, min_num, min_name):
+    '''
+    Parameters
+    ----------
+    num: num is an integer value that's the score value of the anime
+    
+    name: name is a string value, which represents the name of the anime
+    
+    min_num: min_num is the minimum, lowest scoring title
+    
+    min_name: min_name is the name of the anime with the lowest scoring title 
+
+    Returns
+    -------
+    The program returns the min num and title of the anime if the min. scoring
+    title is less than the score value of the anime
+    
+    The program returns the score value of the anime if the the score is smaller
+    than the lowest scoring title 
+    
+    The program returns the lowest scoring title, if every other if, and elif
+    statement run as false
+
+    '''
+    if num  > min_num:
+        return min_num, min_name
+    elif num < min_num:
+        return num, "\n\t{}".format(name)
+    else:
+        return min_num, "{}\n\t{}".format(min_name, name)
+
+def read_file(data_fp):
+    '''
+    Parameters
+    ----------
+    data_fp: data_fp is a variable that holds the data in the file name 
+    inputed by the user, in the open_file function. 
+
+    Returns
+    -------
+    max_score: max_score returns the highest score of the inputed anime 
+    
+    max_score_name: max_score_name is the name of the anime with the highest
+    score
+    
+    max_episodes: returns the highest number of episodes that are produced by
+    the anime
+    
+    max_episode_name: max_episode_name is the name of the anime with highest
+    number of episodes
+    
+    min_score: returns the lowest scoring anime
+    min_score_name: returns the title of the lowest scoring anime
+    
+    avg_score: returns the average score for all the titles in the file
+
+    '''
+    max_score_name = '' 
+    max_episode_name = ''
+    min_score_name = ''
+    avg_score = 0 
+    max_score = 0
+    max_episodes = 0
+    total = 0 
+    counter = 0
+    min_score = 10000000
+    for line in data_fp:
+        title = line[0:100].strip()
+        score = line[100:105].strip()
+        episodes = line[105:110].strip()
+        if score != 'N/A':
+            max_score, max_score_name = find_max(float(score), title, max_score, max_score_name)
+            min_score, min_score_name = find_min(float(score), title, min_score, min_score_name)
+            total += float(score)
+            counter += 1
+        if episodes != 'N/A':
+            max_episodes, max_episode_name = find_max(int(episodes), title, max_episodes, max_episode_name)
+    if counter == 0: 
+        avg_score = 0
+    else:
+        avg_score = total / counter
+        avg_score=round(avg_score,2)
+    return max_score, max_score_name, max_episodes, max_episode_name, min_score, min_score_name, avg_score
+        
+def search_anime(data_fp, anime_name): #parameters 
+    '''
+    Parameters
+    ----------
+    data_fp: data_fp is a variable that holds the data in the file name 
+    inputed by the user, in the open_file function. 
+    
+    anime_name: anime_name is the name of the anime the user is looking for in
+    in the file that they inputed, data_fp
+
+    Returns
+    -------
+    count: count returns how many times parts of the anime_name appear in the file
+    
+    out_str: returns the title of the anime, or titles if there are multiple,
+    and the release season
+    
+    '''
+    count = 0
+    out_str = ''
+    for line in data_fp:
+        title = line[0:100].strip()
+        release_season = line[110:122].strip() 
+        if anime_name.lower() in title.lower():
+            count += 1
+            out_str += "\n\t{:100s}{:12s}".format(title, release_season)
+    return count, out_str  
+
+def main():
+    
+    BANNER = "\nAnime-Planet.com Records" \
+             "\nAnime data gathered in 2022"
+    
+    MENU ="Options" + \
+          "\n\t1) Get max/min stats" + \
+          "\n\t2) Search for an anime" + \
+          "\n\t3) Stop the program!" + \
+          "\n\tEnter option: "
+    
+    print(BANNER)
+    userInput = input(MENU)
+    options = "123"
+    while True:
+        if userInput == '1':
+            fp = open_file()
+            max_score, max_score_name, max_episodes, max_episode_name, min_score, min_score_name, avg_score = read_file(fp)            
+            print("\n\nAnime with the highest score of {}:".format(max_score))
+            print(max_score_name)
+            print("\n\nAnime with the highest episode count of {:,}:".format(max_episodes))
+            print(max_episode_name)
+            print("\n\nAnime with the lowest score of {:.2f}:".format(min_score))
+            print(min_score_name)
+            print("\n\nAverage score for animes in file is {}".format(avg_score)) 
+            fp.close()
+       
+        elif userInput == '2':
+            fp_anime = open_file()
+            anime = input("\nEnter anime name: ")
+            number, out_str = search_anime(fp_anime, anime) #fp_anime is my argument
+            if number == 0:
+                print("\nNo anime with '{}' was found!".format(anime))
+            else:
+                print("\nThere are {} anime titles with '{}'".format(number, anime))
+                print(out_str)
+            fp_anime.close()
+        
+        elif userInput == "3":
+           print("\nThank you using this program!")
+           break 
+        
+        else:
+            while userInput not in options:
+                print("\nInvalid menu option!!! Please try again!")
+                userInput = input(MENU)
+
+            continue
+        
+        userInput = input(MENU)
+    
+       
+
+# These two lines allow this program to be imported into other code
+# such as our function tests code allowing other functions to be run
+# and tested without 'main' running.  However, when this program is
+# run alone, 'main' will execute.
+#DO NOT CHANGE THESE 2 lines  
+if __name__ == "__main__":
+    main()
+
+
