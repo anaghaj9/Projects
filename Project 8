@@ -1,0 +1,540 @@
+##########################################################################################
+# Computer Project #7
+# Program prompts user to chose an option from the Menu, 1-7
+#                                                                             
+# If the user choses option 1, then the user is prompted to input
+# a year. The user is asking the program to pull games made in the 
+# inputted year from the data base. If the year is a valid year and 
+# there are games that are released during that year, the program will
+# display all the game names sorted alphabetically. 
+#
+# If the user choses option 2, then the user is asking the program to output 
+# a list of games by a specific developer. The user is first prompted to input
+# a developer name. If there are games created by the desired developer, the 
+# program will display all the game names sorted from latest to oldest release year. 
+#
+# If the user choses option 3, then the user is asking for the program to output
+# a list of games within the inputted genre. The user is first prompted to input
+# a genre in which games are categorized under. If there are games that have the 
+# desired genre, games are displayed by names sorted by percentage positive 
+# reviews in descending order.  
+#
+# If the user choses option 4, then the user is asking the program to output a list
+# of games developed by a certain developer within a certain year. The user is first
+# asked to input a developer and a year. If the year is not an integer, an error 
+# message will display. If it is a valid year and if there are games that were made 
+# by the desired developer and are released during the desired year, game names are 
+# displayed sorted in increasing prices. 
+#
+# If the user choses option 5, then the user is asking the program to output a list of
+# games that are in a specific genre that do not offer a discount on thier price. 
+# If there are games that have the desired genre and do not offer a discount on their 
+# price, game names are displayed and sorted from cheapest to most expensive. 
+#
+# If the user choses option 6, then the user is asking the program to output a list of
+# games that are made by a specifc developer that do not offer a discount on their price.
+# If there are games created by the desired developer and do not offer a discount, 
+# display all the game names sorted from cheapest to most expensive.
+#
+# If the user choses option 7, then program quits and displays a goodbye message. 
+# If user doesn't input an option 1-7, then program will output an error message
+# asking user to input another value 
+#########################################################################################
+
+import csv
+from operator import itemgetter
+
+MENU = '''\nSelect from the option: 
+        1.Games in a certain year 
+        2. Games by a Developer 
+        3. Games of a Genre 
+        4. Games by a developer in a year 
+        5. Games of a Genre with no discount 
+        6. Games by a developer with discount 
+        7. Exit 
+        Option: '''
+            
+def open_file(s):
+    '''
+    The open_file function takes one parameter, a string 's' and opens the 
+    file in order to extract the information within the file
+    Parameters
+    ----------
+    s: a string inputted by the user, either 'games' or 'discount' which tells
+    the program what file to extract the information from
+    
+    Returns
+    -------
+    fp: returns a file pointer that opens one of the inputted files by the user
+
+    '''
+    while True:
+        game_name = input('\nEnter {} file: '.format(s)).split(',')
+        for game in game_name:  
+            game = game.lower()
+            try:
+                fp = open(game, 'r',  encoding = "UTF-8")
+                return fp
+            except FileNotFoundError:
+                print('\nNo Such file')
+        
+def read_file(fp_games):
+    '''
+    The read_file function goes through and reads the information that was extracted  
+    by the open file function
+    
+    Parameters
+    ----------
+    fp_games: an opened file, from which the read file function will be reading
+    information
+
+    Returns
+    -------
+    dic: returns a dictionary with a nested list that has all of the information
+    in the file that the user opened
+
+    '''
+    dic = {}
+    read = csv.reader(fp_games)
+    next(read)
+    for title in read:
+        name = title[0]
+        release_dat = title[1]
+        developer = (title[2].split(';'))
+        genre = (title[3].split(';'))
+        
+        player_modes = title[4].split(";")
+        if (player_modes[0]).lower() == 'multi-player':
+            player_modes = 0
+        else:
+            player_modes = 1
+        
+        price = title[5]
+        if "," in price:
+            price = price.replace(",","")
+        try:
+            price = int(price)
+            converted_price = price * .012
+        except:
+            converted_price = 0.0
+        
+        overall_r = title[6]
+        reviews = int(title[7])
+
+        positive = title[8].strip('%')
+        positive = int(positive)
+
+        win_supp = title[9]
+        mac_supp = title[10]
+        lin_supp = title[11]
+        support = []
+        if win_supp == '1':
+            win = support.append('win_support')
+        if mac_supp == '1':
+            mac = support.append('mac_support')
+        if lin_supp == '1':
+            lin = support.append('lin_support')
+        dic.update({name:[release_dat, developer, genre, player_modes, converted_price, overall_r, reviews, positive, support]})
+    return dic 
+
+def read_discount(fp_discount):
+    '''
+    The read discount fucntion reads the discount file and creats a dictionary 
+    with a key and value of the name of the game as the key and the discount 
+    as the float 
+    
+    Parameters
+    ----------
+    fp_discount: The discount file that the read discount function is reading
+
+    Returns
+    -------
+    discount1: Returns a dictionary with the name of the game and the discount
+    associated with that game. 
+
+    '''
+    read = csv.reader(fp_discount)
+    next(read)
+    discount1 = {}
+    for title in read:
+        name = title[0]
+        discount = round(float(title[1]),2)
+        discount1.update({name:discount})
+    return discount1
+
+def in_year(master_D,year):
+    '''
+    The in year function filters out games that were released in a specific year
+    from the master dictionary that was created in the read file function
+    
+    Parameters
+    ----------
+    master_D: master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the year that the 
+    game was created in. 
+    
+    year: The specific year that the games are filtered through
+
+    Returns
+    -------
+    master: the master list returns a list that filters out games that were 
+    released in a specific year
+
+    '''
+    master = []
+    for key,value in master_D.items():
+        date = value[0].split('/')
+        year1 = int(date[-1])
+        if year1 == year:
+            master.append(key)
+    master.sort()
+    return master
+    
+def by_genre(master_D,genre): 
+    '''
+    This function filters out games that are of a specific genre from the main 
+    dictionary you have created in the read_file function (master_D)
+
+    Parameters
+    ----------
+    master_D : master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the genre that the 
+    game was created in.
+    
+    genre: The specific genre that the games are filtered through
+
+    Returns
+    -------
+    master1: the master list returns a list that filters out games that were 
+    released in a specific genre
+
+    '''
+    master = []
+    master1 = []
+    for key,value in master_D.items():
+        genre1 = value[2]
+        if genre in genre1:
+            master.append((key,value[7]))
+    master.sort(key = itemgetter(1), reverse = True)
+    for value in master:
+        name = value[0]
+        master1.append(name)
+    return master1
+        
+def by_dev(master_D,developer): 
+    '''
+    This function filters out games that are made by a specific developer from 
+    the main dictionary you have created in the read_file function (master_D). 
+    It creates a list of game names sorted from latest to oldest released games.
+    If there is a tie in the release year, keep the same order as in the 
+    dictionary. 
+
+    Parameters
+    ----------
+    master_D: master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the developer that the 
+    game was created in.
+
+    developer: the specific developer that the games are fitlered through
+
+    Returns
+    -------
+    names_sorted: a list of game names sorted from latest to oldest released games
+
+    '''
+    names_unsorted = []
+    names_sorted = []
+    for key,value in master_D.items():
+        dev = value[1]
+        if developer in dev:
+            year = int(value[0][-4:])
+            names_unsorted.append((key, year))
+    names_unsorted.sort(key = itemgetter(1), reverse = True)
+    for i,j in names_unsorted:
+        names_sorted.append(i)
+    return names_sorted
+
+def per_discount(master_D,games,discount_D): 
+    '''
+    This function accepts as an argument the main dictionary you have created 
+    in the read_file function (master_D), a list of games (games), and the 
+    discount dictionary that you created in the read_discount function 
+    (discount_D). The function calculates and returns a list of the discounted 
+    price for each game in the list of games rounded to 6 decimal digits. If a 
+    game does not have a discount its original price is returned
+
+    Parameters
+    ----------
+    master_D: master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the discount that the 
+    game was created in.
+    
+    games: a list of games that you're trying to find the discount for
+    
+    discount_D: is a dictionary that was created in the read_discount function
+    that has the discount related to each name
+
+    Returns
+    -------
+    discount_price: Returns a list of the discounted prices of each game that 
+    was inputted by the user
+
+    '''
+    discount_price = []
+    for game in games:
+        if game in discount_D:
+            calc_dis = round((1 - (discount_D[game]/ 100)) * master_D[game][4], 6)
+            discount_price.append(calc_dis)
+        else:
+            discount_price.append(round(master_D[game][4], 6))
+    return discount_price
+
+def by_dev_year(master_D,discount_D,developer,year):
+    '''
+    This function filters out games by a specific developer and released in a 
+    specific year. It returns a list of game names sorted in increasing prices.
+
+    Parameters
+    ----------
+    master_D: master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the discount that the 
+    game was created in.
+    
+    discount_D: is a dictionary that was created in the read_discount function
+    that has the discount related to each name 
+        
+    developer: a list of devloper that you're trying to filter the years through
+    to get specific games
+    
+    year: an inputted year that the games were fitlered through
+
+    Returns
+    -------
+    games: Returns a list of of games, which are fileterd by the developer and 
+    the year sorted in increasing prices
+
+    '''
+    games = []
+    by_year = in_year(master_D, year)
+    dev = by_dev(master_D, developer)
+    both = []
+    for val in by_year:
+        if val in dev:
+            both.append(val)
+    per_dis = per_discount(master_D, both, discount_D)
+    list_of_tup = []
+    for i in range(len(both)):
+        list_of_tup.append((both[i],per_dis[i]))
+    list_of_tup= sorted(list_of_tup, key = itemgetter(1))
+    for name in list_of_tup:
+        games.append(name[0])
+    return games
+          
+def by_genre_no_disc(master_D,discount_D,genre):
+    '''
+    This function filters out games by a specific genre that do not offer a 
+    discount on their price. It returns a list of game names sorted from 
+    cheapest to most expensive. If there is a tie, it should be sorted by the
+    percentage positive reviews in descending order.
+
+    Parameters
+    ----------
+    master_D: master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the discount that the 
+    game was created in.
+        
+    discount_D: is a dictionary that was created in the read_discount function
+    that has the discount related to each name
+        
+    genre: genre is a string that the user enters which helps the program to 
+    figure out under what genres to find games with no discount
+
+    Returns
+    -------
+    games1: a sorted list of games under the same genre with no discount
+
+    '''
+    master = []
+    final = []
+    games1 = []
+    games = by_genre(master_D, genre)
+    # g = set(games)
+    # dis = set(discount_D.keys())
+    # master = g - dis
+    for game in games:
+        if game not in discount_D:
+            master.append(game)
+    for value in master:
+        price1 = master_D[value][4]
+        percent = master_D[value][7]
+        final.append((price1, percent, value))
+    final.sort(key = itemgetter(1), reverse = True)
+    final.sort(key = itemgetter(0))
+    for tup in final:
+        games1.append(tup[2])
+    return games1
+
+def by_dev_with_disc(master_D,discount_D,developer):
+    '''
+    This function filters out games by a specific developer and offers
+    discounts. The function should return a list of game names sorted from 
+    cheapest to most expensive. The original price (not the discounted price) 
+    should be considered when sorting. If there is a tie, sort from latest to 
+    oldest released games. If there is a tie in the release year, keep the 
+    same order as in the dictionary.
+
+    Parameters
+    ----------
+    master_D:  master_D is the master dictionary that was created in the read_file
+    function, where the function will index through to call the discount that the 
+    game was created in.
+    
+    discount_D: is a dictionary that was created in the read_discount function
+    that has the discount related to each name
+    
+    developer: the developer that the program filters through to find games made
+    by the inputted developer that have a discount 
+
+    Returns
+    -------
+    games1: a list of sorted developer specifc games that have a discount
+
+    '''
+    master = []
+    final = []
+    games1 = []
+    games = by_dev(master_D, developer)
+    g = set(games)
+    dis = set(discount_D) 
+    master = g & dis
+    for value in master:
+        price1 = master_D[value][4]
+        final.append((price1, value))
+    final.sort()
+    for tup in final:
+        games1.append(tup[1])
+    return games1
+
+             
+def main():
+    games_fp = open_file('games') #open file variable for games file
+    discount_fp = open_file('discount') #open file variable for discount file
+    read_f = read_file(games_fp) #read file variable for games file pointer
+    read_fp = read_discount(discount_fp) #read file variable for discount file pointer
+    
+    option = input(MENU)
+    while True:
+        #If the user inputs option 1
+        if option == '1':
+            #Checking to see if the year that the user inputted is an integer
+            while True:
+                try:
+                    year1 = int(input('\nWhich year: '))
+                    break
+                except:
+                    print("\nPlease enter a valid year")
+            games_in_year = in_year(read_f, year1)
+            
+            #If the games_in_year program runs True, then it's formatted properly and printed out
+            if games_in_year:
+                print("\nGames released in {}:".format(year1))
+                comma = ', '.join(games_in_year)
+                print(comma)
+            else:
+                print("\nNothing to print")
+
+        #If the user inputs option 2 
+        elif option == '2':
+
+            #Checking to see if the developer name that was inputted was a valid name
+            while True:
+                try:
+                    dev1 = input('\nWhich developer: ')
+                    break
+                except:
+                    print('\nNothing to print')
+            games_in_dev = by_dev(read_f, dev1)
+            
+            #Runs if games_in_dev runs without issue, and runs True. If the statement goes through, the prints out properly formatted list
+            if games_in_dev:
+                print("\nGames made by {}:".format(dev1))
+                comma = ', '.join(games_in_dev)
+                print(comma)
+            else:
+                print("\nNothing to print")
+        
+        #If the user input option 3
+        elif option == '3':
+            #checks to see if the genre that user inputted is valid genre
+            while True:
+                try:
+                    gen1 = input('\nWhich genre: ' )
+                    break
+                except:
+                    print('"\nNothing to print')
+            games_in_gen = by_genre(read_f, gen1)
+            
+            #Runs if games_in_gen is True, and is given proper inputs. Prints out properly formatted list 
+            if games_in_gen:
+                print("\nGames with {} genre:".format(gen1))
+                comma = ', '.join(games_in_gen)
+                print(comma)
+            else:
+                print("\nNothing to print")
+        
+        # If the user input option 4 
+        elif option == '4':
+            #Checking to see if the year that the user inputted is an integer
+            developer1 = input('\nWhich developer: ')
+            while True:
+                try:
+                    year1 = int(input('\nWhich year: '))
+                    break
+                except:
+                    print("\nPlease enter a valid year")
+            dev_year = by_dev_year(read_f, read_fp, developer1, year1)
+            
+            if dev_year: #runs if dev_year is true, and the users input are all valid
+                print("\nGames made by {} and released in {}:".format(developer1, year1))
+                comma = ', '.join(dev_year)
+                print(comma)
+            else:
+                print("\nNothing to print")
+
+        #If the user inputs opiton 5 
+        elif option == '5':
+            genre1 = input('\nWhich genre: ')
+            gen_wo_dis = by_genre_no_disc(read_f, read_fp, genre1) #calls genre with no dis function
+            
+            if gen_wo_dis: #runs if gen_wo_dis is true, and the users input are all valid
+                print("\nGames with {} genre and without a discount:".format(genre1))
+                comma = ', '.join(gen_wo_dis)
+                print(comma)
+            else:
+                print("\nNothing to print")
+       
+        #If user inputted option 6
+        elif option == '6':
+            dev2 = input('\nWhich developer: ')
+            dev_wo_dis = by_dev_with_disc(read_f, read_fp, dev2) #calls developer with no dis function
+            
+            if dev_wo_dis: #runs if dev_wo_dis is true, and the users input are all valid
+                print("\nGames made by {} which offer discount:".format(dev2))
+                comma = ', '.join(dev_wo_dis)
+                print(comma)
+            else:
+                print("\nNothing to print")
+        
+        #If the user inputted option 7
+        elif option == '7':
+            print("\nThank you.")
+            break
+        
+        #If the user enters a value that's not between 1-7
+        else:
+            print("\nInvalid option")
+        
+        option = input(MENU)
+
+if __name__ == "__main__":
+    main()
