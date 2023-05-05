@@ -1,0 +1,206 @@
+#################################
+# Computer Project #4
+# Program prompts user for an option from A - X
+# Then, based on the inputted option, program runs through 
+# and asks for specified inputs based on the chosen option
+# Once proper inputs are given, program runs and outputs
+# proper output bsaed on chosen option
+# If option M is chosen, then program redisplays options the user can chose from 
+# If option X is chosen, th program ends and prints out "May the force be with you"
+#################################
+
+MENU = '''\nPlease choose one of the options below:
+             A. Convert a decimal number to another base system         
+             B. Convert decimal number from another base.
+             C. Convert from one representation system to another.
+             E. Encode an image with a text.
+             D. Decode an image.
+             M. Display the menu of options.
+             X. Exit from the program.'''
+
+# function code to convert decimal number to another base system (binary if base 2, triany if base 3, etc.)
+def numtobase( N, B ):
+    '''
+    Parameters
+    ----------
+    N : N is the number that the user wants to convert into a binary number
+    B : B is the base number that will be used to convert N into a binary number
+    Returns
+    -------
+    The function then returns string "binary" that is the binary number of N 
+    '''
+    N = int(N)
+    B = int(B)
+    if N == 0: #if user enters 0 for N
+        return ''
+    binary = ""
+    while N != 0:
+        last_num = N % B # calculates the remainder N / 8 
+        N = N // B
+        binary = str(last_num) + binary #add last num to the empty binary string
+    length = len(binary)
+    multiple = ((length // 8) + 1) * 8
+    return binary.zfill(multiple)
+
+# function code to convert another base system to a decimal numner, for example, converting a binary value to it's decimal number    
+def basetonum(S, B):
+    '''
+    Parameters
+    ----------
+    S : S represents a number in base B, esentially being a number from the ASCII table, which is composed from base B
+    B : B is the base that is used to calculate the ASCII value S, where it's a number between 2 and 10 inclusive
+    Returns
+    -------
+    The function returns an integer with base 10 representing the decimal value of string S. When the user inputs an empty string 
+    for string S, the function returns 0
+    '''
+    S = str(S)
+    B = int(B)
+    if S == "": # runs if user inputted an empty string
+        return 0
+    total = 0
+    for i,ch in enumerate(S):
+        length = len(S)
+        index = length - i - 1
+        decimal = (B ** (index)) * int(ch)
+        total += decimal
+    return total        
+
+# converts one representation system to another, for example, converts given binary value to decimal value with B1 and then converts decimal value to binary value using B2 
+def basetobase(B1,B2,s_in_B1):
+    B1 = int(B1)
+    B2 = int(B2)
+    s_in_B1 = str(s_in_B1)
+    decimal1 = basetonum(s_in_B1, B1) #convertes s_in_B1 into a decimal value using base B1
+    base = numtobase(decimal1, B2) #converts decimal1 into a 
+    return base
+
+# asks user for binary string of an image, a text they want encoded in the image, and the number of bits per pixel, and encodes the binary value of text into the image  
+def encode_image(image,text,N):
+    '''
+    Parameters
+    ----------
+    B1: B1 is an integer value that is used to convert s_in_B1 into a decimal value
+    B2 : B2 is an integer that is used to convert decimal value B1 into a string with base B2
+    s_in_B1 : s_in_B1 is the string that is used to convert into a decimal value using B1
+    Returns
+    -------
+    base: base is the string composed of 0's and 1's from the ASCII table that is created using B2. 
+    The function returns a string. 
+    '''
+    if image == "":
+        return ""
+    if text == "":
+        return image
+    string = ''
+    for ch in text: #converts text into a binary number
+        number = ord(ch)
+        string += numtobase(number,2)
+    if len(string) > len(image): # if length of the binary text is larger than the length of the binary image, then function can't run
+        return None
+    count = 0
+    resultant = ''
+    for i,ch in enumerate(image): #adds each value of the binary text into the image
+        if (i + 1) % N == 0 and count < len(string): #calculates the LSB and makes sure that count, a variable keeping track of i, is less than the length of
+        # the binary value of text
+            resultant += string[count]
+            count += 1
+        else:
+            resultant += ch
+    return resultant
+
+# asks for a binary string, and how many bits represent each pixel and then decodes the text within the picture, 
+def decode_image(sego,N):
+    '''
+    Parameters
+    ----------
+    image: image is a binary string that represents an image
+    text: is a string that is converted to a binary string, and then encoded into the image string
+    N: N is a integer number that represents how many bits represent each pixel 
+    Returns
+    -------
+    resultant: resultant is the binary string whose base string is the image string, and encoded in that
+    was the binary string for text, where text replaced every LSB within image, if the characters are the same.
+    LSB was solved by using integer N
+    '''
+    hidden_text = ''
+    decode = sego[N-1::N] 
+    decode_len = (len(decode) // 8) * 8 #length of the binary string 
+    decode = decode[:decode_len]
+    for i in range(0, len(decode), 8):
+        hidden_text += chr(basetonum(decode[i:i+8],2))#gets the character that corresponds with the ASCII table for each binary number in decode and adds to empty hidden string
+    return hidden_text
+             
+def main():
+    BANNER = '''
+               A long time ago in a galaxy far, far away...   
+              A terrible civil war burns throughout the galaxy.      
+  ~~ Your mission: Tatooine planet is under attack from stormtroopers,
+                   and there is only one line of defense remaining        
+                   It is up to you to stop the invasion and save the planet~~
+    '''
+    print(BANNER)
+    print(MENU)
+    option = input("\n\tEnter option: ").upper()
+    while option != 'X':
+        if option == 'M': #if the user inputs option M
+            print(MENU)
+
+        elif option == 'A':
+            N = input("\n\tEnter N: ")
+            while N.isdigit() == False: #testing to see if N is a digit, and in the case that it isn't, program asks for new N
+                print("\n\tError: {} was not a valid non-negative integer.".format(N))
+                N = input("\n\tEnter N: ")
+            B = input("\n\tEnter Base: ")
+            while (not B.isdigit() or int(B) < 2 or int(B) > 10): #runs if B is not a digit, or if B is not in between 2 and 10 inclusive, and then programs asks for new B
+                print("\n\tError: {} was not a valid integer between 2 and 10 inclusive.".format(B))
+                B = input("\n\tEnter Base: ")
+            print("\n\t {} in base {}: {}".format(N, (B), numtobase(N, B)))
+            
+        elif option == 'B':
+            S = input("\n\tEnter string number S: ")
+            B = input("\n\tEnter Base: ")
+            while (not B.isdigit() or int(B) < 2 or int(B) > 10): #runs if B is not digits, or if B is not in between 2 and 10 inclusive
+                print("\n\tError: {} was not a valid integer between 2 and 10 inclusive.".format(B))
+                B = input("\n\tEnter Base: ")
+            print("\n\t {} in base {}: {}".format(S, B, basetonum(S, B)))
+            
+        elif option == 'C':
+            B1 = input("\n\tEnter base B1: ")
+            while not B1.isdigit() or int(B1) < 2 or int(B1) > 10: #runs if B1 is not a digit or if B1 is outside the range of 2 and 10 inclusive
+                print("\n\tError: {} was not a valid integer between 2 and 10 inclusive.".format(B1))
+                B1 = input("\n\tEnter base B1: ")
+            B2 = input("\n\tEnter base B2: ")
+            while not B2.isdigit() or int(B2) < 2 or int(B2) > 10: #runs if B2 is not a digit or if B2 is outside the range of 2 and 10 inclusive
+                print("\n\tError: {} was not a valid integer between 2 and 10 inclusive.".format(B2))
+                B2 = input("\n\tEnter base B2: ")
+            s_in_B1 = input("\n\tEnter string number: ") 
+            print("\n\t {} in base {} is {} in base {}...".format(s_in_B1, B1, basetobase(B1, B2, s_in_B1), B2))
+
+        elif option == 'D': #runs when the users inputs option D, asking for a decoded image
+            sego = input("\n\tEnter an encoded string of an image: ")
+            N = int(input("\n\tEnter number of bits used for pixels: "))
+            print("\n\t Original text: {}".format(decode_image(sego,N)))
+
+        elif option == 'E': #runs when the user inputs option E, asking for an encoded image
+            image = input('\n\tEnter a binary string of an image: ')
+            N = int(input("\n\tEnter number of bits used for pixels: "))
+            text = input("\n\tEnter a text to hide in the image: ")
+            length = encode_image(image, text, N)
+            
+            if length: 
+                print("\n\t Original image: {}".format(image))
+                print("\n\t Encoded image: {}".format(encode_image(image, text, N)))
+            else:
+                print("\n\tImage not big enough to hold all the text to steganography")
+               
+               
+        else: #outside of the while loop, runs when the user enters an option that isn't A, B, C, E, D, M, or X
+            print("\nError:  unrecognized option [{}]".format(option))
+            print(MENU)
+    
+        option = input("\n\tEnter option: ").upper() #prints when the if condition is done running and asks the user if they want to enter another input
+    else:
+        print('\nMay the force be with you.') 
+if __name__ == '__main__': 
+    main()
