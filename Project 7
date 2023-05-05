@@ -1,0 +1,533 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 30 16:14:28 2023
+
+@author: anaghaj
+"""
+import csv
+from datetime import datetime
+from operator import itemgetter
+
+COLUMNS = ["date",  "average temp", "high temp", "low temp", "precipitation", \
+           "snow", "snow depth"]
+TOL = 0.02
+
+BANNER = 'This program will take in csv files with weather data and compare \
+the sets.\nThe data is available for high, low, and average temperatures,\
+\nprecipitation, and snow and snow depth.'    
+
+
+MENU = '''
+        Menu Options:
+        1. Highest value for a specific column for all cities
+        2. Lowest value for a specific column for all cities
+        3. Average value for a specific column for all cities
+        4. Modes for a specific column for all cities
+        5. Summary Statistics for a specific column for a specific city
+        6. High and low averages for each category across all data
+        7. Quit
+        Menu Choice: '''
+        
+      
+        
+def open_files():
+    '''
+    Returns
+    -------
+    fileName: File Name is a list that hold the information of the opened files,
+    files that are inputted by the user
+    
+    cities: cities is a list that holds each city that user inputted in a list format
+    '''
+    city = input("Enter cities names: ").split(',')
+    cities = []
+    fileName = []
+    for names in city:
+        names = names.lower()
+        
+        try:
+            fp = open(names + '.csv', 'r', encoding = "utf-8")
+            cities.append(names)
+            fileName.append(fp)
+        
+        except FileNotFoundError:
+            print("\nError: File {}.csv is not found".format(names))
+    return fileName, cities
+    
+
+def read_files(cities_fp):
+    '''
+    Parameters
+    ----------
+    cities_fp: cities_fp is a file pointer that holds all of the cities
+
+    Returns
+    -------
+    empty_list: empty list is a list that hold date, temp, high temp, low temp,
+    percipitation, snow and snow depth. It orginally skips the two headers
+
+    '''
+    empty_list = []
+    for city in cities_fp:
+        empty_list1 = []
+        read = csv.reader(city)
+        next(read)
+        next(read)
+        for num in read:
+            date = num[0]
+            try:
+                temp = float(num[1])
+            except:
+                temp = None
+            try:
+                highT = float(num[2])
+            except:
+                highT = None
+            try:
+                lowT = float(num[3])
+            except:
+                lowT = None
+            try:
+                precp = float(num[4])
+            except:
+                precp = None
+            try:
+                snow = float(num[5])
+            except:
+                snow = None
+            try:
+                snowDepth = float(num[6])
+            except:
+                snowDepth = None                
+            empty_list1.append((date, temp, highT, lowT, precp, snow, snowDepth))
+            
+        empty_list.append(empty_list1)
+        city.close()
+            
+    return empty_list
+
+def get_data_in_range(data, start_date_str, end__date_str):
+    '''
+    Parameters
+    ----------
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+    
+    start_date_str: start date is a parameter entered by the user which is the
+    start date at which the data starts compiling from that date
+        
+    end__date_str: end date is a parameter entered by the user which is the end
+    date at which the data ends compiling at that date
+
+    Returns
+    -------
+    master_list: master list is a list that holds the data from the cities files
+    between the start and end dates that the user entered
+
+    '''
+    start_date = datetime.strptime(start_date_str, "%m/%d/%Y").date()
+    end_date = datetime.strptime(end__date_str, "%m/%d/%Y").date()
+    master_list = []
+    for info in data:
+        city_data = []
+        for tup in info:
+            date = tup[0]
+            curr_date = datetime.strptime(date, "%m/%d/%Y").date()
+            if start_date <= curr_date <= end_date:
+                city_data.append(tup)
+        master_list.append(city_data)
+    return master_list
+
+def get_min(col, data, cities): 
+    '''
+    Parameters
+    ----------
+    col: column is a num that is the index of the column from each city 
+    that is being iterated through to get information for the minimum value
+    
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+    
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+
+    Returns
+    -------
+    master1: returns a list of the city and the minimum value corresponding in
+    column 'col' for each city in cities 
+
+    '''
+    master1 = []
+    count = 0
+    for info in data:
+        min_List = []
+        for tup in info:
+            if tup[col] != None:
+                min_List.append(tup[col])
+        minimum = min(min_List)
+        master1.append((cities[count], minimum))
+        count += 1
+    return master1
+        
+def get_max(col, data, cities): 
+    '''
+    Parameters
+    ----------
+    col: column is a num that is the index of the column from each city 
+    that is being iterated through to get information for the minimum value
+    
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+    
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+
+    Returns
+    -------
+    master2: returns a list of the city and the maximum value corresponding in
+    column 'col' for each city in cities 
+
+    '''
+    master2 = []
+    count = 0
+    for info in data:
+        max_List = []
+        for value in info:
+            if value[col] != None:
+                max_List.append(value[col])
+        maximum = max(max_List)
+        master2.append((cities[count], maximum))
+        count += 1
+    return master2
+
+def get_average(col, data, cities): 
+    '''
+    Parameters
+    ----------
+    col: column is a num that is the index of the column from each city 
+    that is being iterated through to get information for the minimum value
+    
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+    
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+
+    Returns
+    -------
+    master2: returns a list of the city and the average value corresponding in
+    column 'col' for each city in cities 
+
+    '''
+    master3 = []
+    nums = 0
+    for info in data:
+        avg_List = []
+        for num in info:
+            if num[col] != None:
+                avg_List.append(num[col])
+        if len(avg_List) > 0:
+            avg = sum(avg_List) / len(avg_List)
+            master3.append((cities[nums], round(avg, 2)))
+        else:
+            master3.append((cities[nums], None))
+        nums+=1
+    return master3
+
+    pass   # remove this line
+
+def equality(n1, n2):
+    '''
+    Parameters
+    ----------
+    n1: A float N1 is considered equal to the reference float N2 if the absolute
+    relative difference is below TOL
+    
+    n2: A float N2 is considered equal to the reference float N1 if the absolute
+    relative difference is below TOL
+
+    Returns
+    -------
+    returns the most occuring value if n1 isn't equal to 0. If it was eqaul to 
+    0, then the helper function returns a 0
+
+    '''
+    if n1 != 0:
+        return abs((n1 - n2) / n1) <= TOL
+    else:
+        return False
+
+def get_modes(col, data, cities):
+    '''
+    Parameters
+    ----------
+    col: column is a num that is the index of the column from each city 
+    that is being iterated through to get information for the minimum value
+    
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+    
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+
+    Returns
+    -------
+    master_list1: returns a list of the city and the mode value corresponding in
+    column 'col' for each city in cities
+
+    '''
+    master_list1 = []
+    for index, city_data in enumerate(data):
+        city = cities[index]
+        column_data = []
+        for line in city_data:
+            if line[col] != None:
+                column_data.append(line[col])
+        column_data.sort()
+        orginal = column_data[0]
+        mode_List = []
+        streak = 1
+        for value in column_data[1:]:
+            if equality(orginal, value):
+                streak += 1
+            else:
+                mode_List.append((orginal, streak))
+                streak = 1
+                orginal = value
+        mode_List.append((orginal, streak))
+        max_frq = 0
+        final_mode = []
+        for mod_val, mod_frq in mode_List:
+            if mod_frq > max_frq:
+                max_frq = mod_frq
+        for val, freq in mode_List:
+            if freq == max_frq and max_frq != 1:
+                final_mode.append(val)
+
+        master_list1.append((city, final_mode, max_frq))
+    return master_list1   
+
+def high_low_averages(data, cities, categories):
+    '''
+    Parameters
+    ----------
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user.
+    
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+        
+    categories: A list of categories that the user inputs to find the highest and
+    lowest avaerage of each category. If the category does not exist add None 
+    instead of the category_list. If there is a tie for the highest or lowest 
+    average values use the first city that appears in the original master list.
+
+    Returns
+    -------
+    master: The returned list of lists of tuples where the inner list 
+    corresponds to a category and each tuple consists of the cities with the 
+    lowest and highest average
+
+    '''
+    master = []
+    for category in categories:
+        if category in COLUMNS:
+            cat_data = COLUMNS.index(category)
+            average = get_average(cat_data, data, cities)
+            sorted_list1 = sorted(average, key = itemgetter(1))
+            sorted_list2 = sorted(average, key = itemgetter(1), reverse=True)
+            highest_val = sorted_list2[0]
+            lowest_val = sorted_list1[0]
+            master.append([lowest_val, highest_val])
+        else:
+            master.append(None)
+    return master    
+
+def display_statistics(col,data, cities):
+    '''
+    Parameters
+    ----------
+    col: column is a num that is the index of the column from each city 
+    that is being iterated through to get information for the minimum value
+     
+    data: data is a list of list of tuples which holds the information similar 
+    to what's returned in read file. It helps to extra the data between the start 
+    and end date inputted by the user. 
+     
+    cities: cities is the list of cities that the user inputted, which is then 
+    extracted through the open file
+
+    Returns
+    -------
+    Returns a list with the cities maximum, minimum , average value and the mode
+    of each city. 
+
+    '''
+    max_val = get_max(col, data, cities)
+    min_val = get_min(col, data, cities)
+    avg_val = get_average(col, data, cities)
+    modes_val = get_modes(col, data, cities)
+
+    count = 0
+    for city in cities:
+        print("\t{}: ".format(city))
+        max1 = max_val[count][1]
+        min1 = min_val[count][1]
+        avg1 = avg_val[count][1]
+        freq = modes_val[count][2]
+        modes = modes_val[count][1]
+        modes1 = [str(i) for i in modes]
+        print("\tMin: {:.2f} Max: {:.2f} Avg: {:.2f}".format(min1, max1, avg1))
+        if freq == 1:
+            print("\tNo modes.")
+        else:
+            print("\tMost common repeated values ({:d} occurrences): {:s}\n".format(freq, ",".join(modes1)))
+        count += 1
+
+
+ 
+            
+def main():
+    print(BANNER)
+    #two variables equal to the two variables returned in the open file
+    fileName, cities = open_files() 
+    #one variable equal to the one variable returned in the read file, and the read file uses the fileName variable from the open files
+    read_f = read_files(fileName)
+    #choice is the user inputted integer from the menu
+    choice = int(input(MENU))
+    
+    while True:
+        
+        #if the user enters option 1 as their choice
+        if choice == 1:
+            #user inputs
+            starting_date = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            ending_date = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired category: ").lower()
+            
+            #if the user category is not in columns
+            if user_category not in COLUMNS:
+                print("\n\t{} category is not found.".format(user_category))
+                user_category = input("\nEnter desired category: ").lower()
+            
+            col = COLUMNS.index(user_category)
+            print("\n\t{}: ".format(user_category))
+            #calls the get maximum function
+            max_option = get_max(col, get_data_in_range(read_f, starting_date, ending_date), cities)
+            for value in max_option:
+                print("\tMax for {:s}: {:.2f}".format(value[0], value[1]))
+        
+        #if the user enters option 2 as their choice
+        elif choice == 2:
+            #user inputs
+            starting_date = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            ending_date = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired category: ").lower()
+            
+            #if the user category is not in columns
+            if user_category not in COLUMNS:
+                print("\n\t{} category is not found.".format(user_category))
+                user_category = input("\nEnter desired category: ").lower()
+            
+            col = COLUMNS.index(user_category)
+            print("\n\t{}: ".format(user_category))
+            #calls the get minimum function
+            min_option = get_min(col, get_data_in_range(read_f, starting_date, ending_date), cities)
+            for value in min_option:
+                print("\tMin for {:s}: {:.2f}".format(value[0], value[1]))
+        
+        #if the user enters option 3 as their choice
+        elif choice == 3:
+            #user inputs
+            starting_date = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            ending_date = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired category: ").lower()
+            
+            #if the user category is not in columns
+            if user_category not in COLUMNS:
+                print("\n\t{} category is not found.".format(user_category))
+                user_category = input("\nEnter desired category: ").lower()
+            
+            col = COLUMNS.index(user_category)
+            print("\n\t{}: ".format(user_category))
+            #calls the get average function
+            avg_option = get_average(col, get_data_in_range(read_f, starting_date, ending_date), cities)
+            for value in avg_option:
+                print("\tAverage for {:s}: {:.2f}".format(value[0], value[1]))
+        
+        #if the user enters option 4 as their choice
+        elif choice == 4:
+            #user inputs
+            starting_date = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            ending_date = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired category: ").lower()
+            
+            #if the user category is not in columns
+            if user_category not in COLUMNS:
+                print("\n\t{} category is not found.".format(user_category))
+                user_category = input("\nEnter desired category: ").lower()
+            
+            col = COLUMNS.index(user_category)
+            print("\n\t{}: ".format(user_category))
+            #calls the get modes function
+            mode_option = get_modes(col, get_data_in_range(read_f, starting_date, ending_date), cities)
+            for value in mode_option:
+                print("\tMost common repeated values for {:s} ({:d} occurrences): {:.1f}\n".format(value[0], value[2], value[1][0]))
+        
+        #if the user enter option 5 as their choice
+        elif choice == 5:
+            #user inputs
+            start = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            end = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired category: ").lower()
+            #extracting data from in-between start and end dates
+            data = get_data_in_range(read_f, start, end)
+            
+            #if the user category is not in columns
+            if user_category not in COLUMNS:
+                print("\n\t{} category is not found.".format(user_category))
+                user_category = input("\nEnter desired category: ").lower()
+            
+            col = COLUMNS.index(user_category)
+            print("\n\t{}: ".format(user_category))
+            stats = display_statistics(col, data, cities)
+        
+        #if the user enters option 6 as their choice    
+        elif choice == 6:
+            #user inputs
+            starting_date = input("\nEnter a starting date (in mm/dd/yyyy format): ")
+            ending_date = input("\nEnter an ending date (in mm/dd/yyyy format): ")
+            user_category = input("\nEnter desired categories seperated by comma: ").lower().split(',')
+            #extracting data from in-between start and end dates
+            data = get_data_in_range(read_f, starting_date, ending_date)
+         
+            print("\nHigh and low averages for each category across all data.")
+            high_low = high_low_averages(data,cities, user_category)
+            for i,category in enumerate(user_category):
+                #if the category in user_category isn't empty, or has None in it
+                if category != None:
+                    #if the user category is not in columns
+                    if category.strip() not in COLUMNS:
+                        print("\n\t{} category is not found.".format(category))
+                    else:
+                        print("\n\t{}: ".format(category))
+                        high_low_avg = high_low[i] #indexing through the list of list of tuples
+                        print("\tLowest Average: {:s} = {:.2f} Highest Average: {:s} = {:.2f}". format(high_low_avg[0][0], high_low_avg[0][1], high_low_avg[1][0], high_low_avg[1][1]))
+        
+        #if the user enters option 7 as their choice
+        elif choice == 7:
+            print("\nThank you using this program!")
+            break
+        choice = int(input(MENU))
+            
+#DO NOT CHANGE THE FOLLOWING TWO LINES OR ADD TO THEM
+#ALL USER INTERACTIONS SHOULD BE IMPLEMENTED IN THE MAIN FUNCTION
+if __name__ == "__main__":
+    main()
