@@ -1,0 +1,150 @@
+###########################################################
+# Computer Project #3
+# User inputs the desired location of the house, the desired size of the house in square feet,
+# the desired maximum monthly payment, the expected down payment, and the current APR.
+# Using this information, the program will compute and output either the estimated monthly
+# payment or the maximum square footage that the buyer should consider given the values
+# provided. 
+# Program then asks for users if they would like amortization table, if given a square footage
+# value. If user answers "Y", then table is printed. 
+###########################################################
+
+NUMBER_OF_PAYMENTS = 360    # 30-year fixed rate mortgage, 30 years * 12 monthly payments
+SEATTLE_PROPERTY_TAX_RATE = 0.0092
+SAN_FRANCISCO_PROPERTY_TAX_RATE = 0.0074
+AUSTIN_PROPERTY_TAX_RATE = 0.0181
+EAST_LANSING_PROPERTY_TAX_RATE = 0.0162
+AVERAGE_NATIONAL_PROPERTY_TAX_RATE = 0.011
+SEATTLE_PRICE_PER_SQ_FOOT = 499.0
+SAN_FRANCISCO_PRICE_PER_SQ_FOOT = 1000.0
+AUSTIN_PRICE_PER_SQ_FOOT = 349.0
+EAST_LANSING_PRICE_PER_SQ_FOOT = 170.0
+AVERAGE_NATIONAL_PRICE_PER_SQ_FOOT = 244.0
+APR_2023 = 0.0668
+
+''' WRITE YOUR CODE USING THE CONSTANT VALUES ABOVE '''
+run_again = "Y" or "y"
+while run_again == "Y" or run_again == "y":
+    print("\nMORTGAGE PLANNING CALCULATOR\n============================ ")
+    print("\nEnter a value for each of the following items or type 'NA' if unknown ")
+    
+    # user inputs
+    location = input("\nWhere is the house you are considering (Seattle, San Francisco, Austin, East Lansing)? ")
+    max_sqft = input("\nWhat is the maximum square footage you are considering? ")
+    max_monthlyPay = input("\nWhat is the maximum monthly payment you can afford? ")
+    down_payment = input("\nHow much money can you put down as a down payment? ")
+    apr = input("\nWhat is the current annual percentage rate? ")
+   
+    # converting inputs into values used to calculate
+    if max_sqft != "NA":
+        float_sqft1 = float(max_sqft)
+    if max_monthlyPay != "NA":
+        float_monthly1 = float(max_monthlyPay)
+    down_payment1 = float(down_payment)
+   
+    # if inputed values were NA
+    if down_payment == "NA":
+        down_payment = 0
+    if apr == "NA":
+        apr = APR_2023 * 100 
+    
+    # converting APR into values used to calculate
+    apr_int = float(apr)
+    apr_calc = (apr_int / 100)
+    interest_rate = (apr_calc) / 12
+    NUMBER_OF_PAYMENTS = 360 # 30-year fixed rate mortgage, 30 years * 12 monthly payments
+    
+    #if user inputed values other than given locations and NA for max sq.ft and max. monthly payment
+    if location != "Seattle" and location != "San Francisco" and location != "Austin" and location != "East Lansing":
+        print("\nUnknown location. Using national averages for price per square foot and tax rate.")
+        location = "the average U.S. housing market"
+    if max_sqft == "NA" and max_monthlyPay == "NA":
+        print("\nYou must either supply a desired square footage or a maximum monthly payment. Please try again.")
+        max_sqft = input("\nWhat is the maximum square footage you are considering?")
+        max_monthlyPay = float(input("\nWhat is the maximum monthly payment you can afford? "))
+        table = "N" #because max sq footage is not given
+    
+    # price and tax for each city 
+    if location == "Seattle":
+        price_per_sqr_feet = SEATTLE_PRICE_PER_SQ_FOOT
+        property_tax = SEATTLE_PROPERTY_TAX_RATE
+    elif location =="East Lansing":
+        price_per_sqr_feet = EAST_LANSING_PRICE_PER_SQ_FOOT
+        property_tax = EAST_LANSING_PROPERTY_TAX_RATE
+    elif location == "San Francisco":
+        price_per_sqr_feet = SAN_FRANCISCO_PRICE_PER_SQ_FOOT
+        property_tax = SAN_FRANCISCO_PROPERTY_TAX_RATE
+    elif location == "Austin":
+        price_per_sqr_feet = AUSTIN_PRICE_PER_SQ_FOOT
+        property_tax = AUSTIN_PROPERTY_TAX_RATE
+    else:
+        price_per_sqr_feet = AVERAGE_NATIONAL_PRICE_PER_SQ_FOOT
+        property_tax = AVERAGE_NATIONAL_PROPERTY_TAX_RATE
+    
+
+    # if both max. sq. ft and max. monthly payment were given 
+    if max_sqft != "NA" and max_monthlyPay != "NA":
+        cost = int(float_sqft1 * price_per_sqr_feet) # my house cost
+        current_loan = float(cost - down_payment1) #my loan value, P value in the equation
+        taxes = cost * (property_tax / 12) #taxes 
+        mortgage_payment = (current_loan * ((interest_rate) * ((1 + interest_rate) ** NUMBER_OF_PAYMENTS)) / 
+                            (((1 + interest_rate) ** NUMBER_OF_PAYMENTS) - 1))
+        monthly_payment = float(mortgage_payment + taxes) #addition near the end
+       
+        # if user's maximum monthly payment is greater than monthly payment owed 
+        if float_monthly1 > monthly_payment:
+            print(f"\n\nIn {location}, an average {max_sqft} sq. foot house would cost ${cost}.\nA 30-year"
+                  f" fixed rate mortgage with a down payment of ${down_payment} at {apr_int:.1f}% APR results\n"
+                  f"\tin an expected monthly payment of ${taxes:.2f} (taxes) + ${mortgage_payment:.2f} "
+                  f"(mortgage payment) = ${monthly_payment:.2f}\nBased on your maximum monthly payment of ${float_monthly1:.2f} you can afford this house.\n")
+            table = input("Would you like to print the monthly payment schedule (Y or N)? ") #asking for amortization table 
+       
+        # if user's maximum monthly payment is less than monthly payment owed 
+        if float_monthly1 < monthly_payment:
+            print(f"\n\nIn {location}, an average {max_sqft} sq. foot house would cost ${cost}.")
+            print(f"A 30-year fixed rate mortgage with a down payment of ${down_payment} at {apr_int:.1f}% APR results")
+            print(f"\tin an expected monthly payment of ${taxes:.2f} (taxes) + ${mortgage_payment:.2f} (mortgage payment) = ${monthly_payment:.2f}")
+            print(f"Based on your maximum monthly payment of ${float_monthly1:.2f} you cannot afford this house.\n")
+            table = input("Would you like to print the monthly payment schedule (Y or N)? ") #asking for amortization table
+    
+    # if max. sq. ft wasn't given and max. monthly payment was given 
+    elif max_sqft == "NA" and max_monthlyPay != "NA":
+        principal = (float(max_monthlyPay) * (((1 + (interest_rate)) ** 360)-1) / 
+                    ((interest_rate) * ((1 + (interest_rate)) ** 360)))
+        house_cost = principal + down_payment1 
+        sq_ft = house_cost / price_per_sqr_feet
+        print(f"\n\nIn {location}, a maximum monthly payment of ${float_monthly1:.2f} allows the purchase of a house of"
+              f" {int(sq_ft)} sq. feet for ${int(house_cost)}\n\t assuming a 30-year fixed rate mortgage with a ${down_payment}"
+              f" down payment at {apr:.1f}% APR.")
+        table = "N" #table value says no because the max. square foot 
+    
+    # if max square footage value is given but my monthly payment value is given
+    elif max_sqft != "NA" and max_monthlyPay == "NA": 
+        cost = int(float_sqft1 * price_per_sqr_feet) #house cost
+        taxes = cost * (property_tax / 12) #tax value 
+        current_loan = float(cost - down_payment1) #the principal value 
+        mortgage_payment = (current_loan * ((interest_rate) * ((1 + interest_rate) ** NUMBER_OF_PAYMENTS)) / 
+                        (((1 + interest_rate) ** NUMBER_OF_PAYMENTS) - 1))
+        monthly_payment = mortgage_payment + taxes #when I add mortgage and taxes value
+        print("\n")
+        print(f"In {location}, an average {max_sqft} sq. foot house would cost ${cost}.\nA 30-year"
+                  f" fixed rate mortgage with a down payment of ${down_payment} at {apr_int:.1f}% APR results\n"
+                  f"\tin an expected monthly payment of ${taxes:.2f} (taxes) + ${mortgage_payment:.2f}"
+                  f" (mortgage payment) = ${monthly_payment:.2f}")
+        table = input("\nWould you like to print the monthly payment schedule (Y or N)? ")
+    
+    #if user askes for the amortization table  
+    table = table.upper()
+    if table == 'Y': #when the user asks for the table
+        print('\n{:^7}| {:^9} | {:10} | {:11}'. format("Month", " Interest ", " Principal ", "  Balance    "))
+        print("================================================")
+        monthly_pay = 0
+        for i in range(1,361): #my monthly calucation
+            principal = current_loan - monthly_pay
+            balance = principal #balance value
+            interest = principal * (apr_calc / 12) #thier interest calculation
+            monthly_pay = mortgage_payment - interest #monthly payment 
+            print('{:^7d}| ${:>9.2f} | ${:>10.2f} | ${:>11.2f}'.format(i, interest, monthly_pay, balance))
+            current_loan = balance
+    
+    run_again = input("\nWould you like to make another attempt (Y or N)? ")
