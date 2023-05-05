@@ -1,0 +1,354 @@
+#########################################################################################
+# Computer Project #10
+# Program is a simplified version of Aces Up
+#                                                                             
+# You will develop a program that allows the user to play Aces Up according to the rules given.
+# The program will use the instructor-supplied cards.py module to model the cards and deck 
+# of cards. 
+# 
+# If the user enters "D", from the menu, then cards will be dealth to the tableau
+#
+# If the user enters "F, x", from the menu, then cards will be moved from the Tableau 
+# column x to the Foundation. 
+#
+# If the user enters "T, x, y", from the menu, then the cards will be moved from Tableau
+# column x to empty Tableau column y
+#
+# If the user enters "R" from the menu, then the game will reset after shuffling
+#
+# If the user enters "H" from the menu, then the game will display the menu of options
+#
+# If the user enters "Q" from the menu, then the game will quit after printing a quit 
+# statement. 
+#########################################################################################
+
+import cards  # required !!!
+
+RULES = '''
+Aces High Card Game:
+     Tableau columns are numbered 1,2,3,4.
+     Only the card at the bottom of a Tableau column can be moved.
+     A card can be moved to the Foundation only if a higher ranked card 
+     of the same suit is at the bottom of another Tableau column.
+     To win, all cards except aces must be in the Foundation.'''
+
+MENU = '''     
+Input options:
+    D: Deal to the Tableau (one card on each column).
+    F x: Move card from Tableau column x to the Foundation.
+    T x y: Move card from Tableau column x to empty Tableau column y.
+    R: Restart the game (after shuffling)
+    H: Display the menu of choices
+    Q: Quit the game        
+'''
+def init_game():
+    '''
+    init_game: is a function that initalizes the game. The function has no parameters and returns the
+    starting state of the game with the three data structures initialized, stock, tableau and foundation
+    ----------
+    Returns
+    ---------
+    the_deck: is the stock, which is type Class deck
+
+    tableau: a list of lists which the column of a four-column of cards
+
+    foundation: is a single pile of cards. The foundation starts out empty and is filled during play
+    '''
+    the_deck = cards.Deck()
+    the_deck.shuffle()
+    tableau = [[], [], [], []]
+    foundation = [] 
+    cards1 = deal_to_tableau(tableau, the_deck)    
+    return (the_deck, tableau, foundation)
+    
+def deal_to_tableau( tableau, stock):
+    '''
+    deal_to_tableau: The program will use this function to deal cards to the tableau. This function has two parameters: the
+    data structure representing the stock and the data structure representing the tableau. It will deal a card
+    from the stock to each column of the tableau, unless the stock has fewer than 4 cards; in which case it
+    will just deal a card to consecutive columns until the stock is empty
+
+    Parameters:
+    --------------
+    tableau: The function will deal a card from the stock to each column of the tableau, unless the stock has fewer than 4 cards; 
+    in which case it will just deal a card to consecutive columns until the stock is empty
+    
+    stock: The game is played with one standard deck of 52 cards. The deck is shuffled and becomes the initial
+    stock (pile of cards). The cards in the stock are placed face down.
+    '''
+    for item in range(len(tableau)):
+        if stock.is_empty != None:
+            dealt_cards = stock.deal()
+            tableau[item].append(dealt_cards)
+        
+def validate_move_to_foundation( tableau, from_col ):
+    '''
+    validate_move_to_foundation: The program will use this function to determine if a requested move to the foundation is valid. The
+    function should not modify the tableau in any case
+
+    Parameters:
+    --------------
+    tableau: a list of lists which the column of a four-column of cards
+
+    from_col: an int indicating the index of the column whose bottom card should be moved. the index of the column in the tableau 
+    (range from 0 to 3).
+
+    Returns:
+    -------------
+
+    The function will return True, if the move is valid; and False, otherwise. In the latter case, it will also
+    print an appropriate error message. Also, you cannot move a card from an empty column.
+    '''
+    try:
+        if tableau[from_col][-1]: 
+            pass
+    except IndexError:
+        print("\nError, empty column:", from_col + 1)
+        return False
+    card = tableau[from_col][-1] #gets card from the column
+    suite = card.suit() #gives me the suit of the card
+    rank = card.rank() #gives me the rank of the card   
+    if rank == 1:
+        print("\nError, cannot move {}.".format(card))
+        return False
+    for col in tableau:
+        if col:
+            card_t = col[-1]
+            suite2 = card_t.suit() #gives me the suit of the card
+            rank2 = card_t.rank() #gives me the rank of the card   
+            if rank2 == 1:
+                rank2 = 14
+            if suite == suite2 and rank < rank2:
+                return True
+    print("\nError, cannot move {}.".format(card))
+    return False
+    
+def move_to_foundation( tableau, foundation, from_col ):
+    '''
+    move_to_foundation: The program will use this function to move a card from the tableau to the foundation. 
+    If the move is valid, the function will update the tableau and foundation; otherwise, it will do nothing to them.
+
+    Parameters:
+    -----------
+    tableau: a list of lists which the column of a four-column of cards
+
+    foundation: is a single pile of cards. The foundation starts out empty and is filled during play
+
+    from_col: an int indicating the index of the column whose bottom card should be moved. from_col is the index of 
+    the column in the tableau (range from 0 to 3)
+
+    '''
+    if validate_move_to_foundation(tableau, from_col):
+        card = tableau[from_col].pop()
+        foundation.append(card)
+
+def validate_move_within_tableau( tableau, from_col, to_col ):
+    '''
+    validate_move_within_tableau: The program will use this function to determine if a requested move to within the tableau is valid.
+    The function will return True, if the move is valid; and False, otherwise. In the latter case, it will also print an appropriate 
+    error message
+    
+    Parameters:
+    -----------
+    tableau: a list of lists which the column of a four-column of cards
+
+    from_col: from_col is the index of the columns in the tableau (range from 0 to 3)
+
+    to_col: to_col is the index of the columns in the tableau (range from 0 to 3)
+
+    Returns:
+    ----------
+    The function will return True, if the move is valid; and False, otherwise. In the latter case, it will also
+    print an appropriate error message.
+
+    '''
+    to_col1 = tableau[to_col]
+    from_col1 = tableau[from_col]
+
+    if len(to_col1) == 0 and len(from_col1) > 0:
+        return True
+    
+    elif len(to_col1) != 0:
+        print("\nError, target column is not empty:", to_col+1)
+        return False
+    
+    elif len(from_col1) == 0:
+        print("\nError, no card in column:", from_col+1)
+        return False
+
+def move_within_tableau(tableau, from_col, to_col):
+    '''
+    move_within_tableau: The program will use this function to move a card from the tableau to the foundation.
+
+    Parameters:
+    -----------
+    tableau: a list of lists which the column of a four-column of cards
+
+    from_col: from_col is the index of the columns in the tableau (range from 0 to 3)
+
+    to_col: to_col is the index of the columns in the tableau (range from 0 to 3) 
+    '''
+    
+    if validate_move_within_tableau(tableau, from_col, to_col):
+        card = tableau[from_col].pop()
+        tableau[to_col].append(card)
+        
+def check_for_win( tableau, stock ):
+    '''
+    check_for_win: The program will use this function to check if the game has been won.
+
+    Parameters:
+    -----------
+    tableau: a list of lists which the column of a four-column of cards
+    
+    stock: The game is played with one standard deck of 52 cards. The deck is shuffled and becomes the initial
+    stock (pile of cards). The cards in the stock are placed face down.
+
+    Returns:
+    ---------
+    The function returns True, if the stock is empty and the tableau contains only the four aces; and False, otherwise
+    '''
+    if stock.is_empty():
+        for value in tableau:
+            for card in value:
+                card_rank = card.rank()
+                if card_rank == 1:
+                    continue
+                else:
+                    return False
+            
+        return True
+    else:
+        return False
+
+def display( stock, tableau, foundation ):
+    '''Provided: Display the stock, tableau, and foundation.'''
+
+    print("\n{:<8s}{:^13s}{:s}".format( "stock", "tableau", "  foundation"))
+    maxm = 0
+    for col in tableau:
+        if len(col) > maxm:
+            maxm = len(col)
+    
+    assert maxm > 0   # maxm == 0 should not happen in this game?
+        
+    for i in range(maxm):
+        if i == 0:
+            if stock.is_empty():
+                print("{:<8s}".format(""),end='')
+            else:
+                print("{:<8s}".format(" XX"),end='')
+        else:
+            print("{:<8s}".format(""),end='')        
+        
+        #prior_ten = False  # indicate if prior card was a ten
+        for col in tableau:
+            if len(col) <= i:
+                print("{:4s}".format(''), end='')
+            else:
+                print( "{:4s}".format( str(col[i]) ), end='' )
+
+        if i == 0:
+            if len(foundation) != 0:
+                print("    {}".format(foundation[-1]), end='')
+                
+        print()
+
+
+def get_option():
+    '''
+    get_option: The program will use this function to prompt the user to enter an option and return a representation of
+    the option designed to facilitate subsequent processing. This function takes no parameters. It prompts the user for 
+    an option and checks that the input supplied by the user is of the form requested in the menu. If the input is not 
+    one of the 'DFTRHQ' value, the function prints an error message and returns an empty list
+
+    Returns:
+    ----------
+    If the inputted value is 'DRHQ', then a list with that value is returned. If the inputted value is
+    "F" or "T", then the function returns a list with the letter and the first number for "F", and 
+    a list with the letter and the first index value and the last index value for "T". If the value is
+    none of those letters, then an error statement is printed and an empty list is returned. 
+    '''
+    org_in= input("\nInput an option (DFTRHQ): ")
+    choice = org_in.upper().strip().split()
+    if choice[0] not in 'DFTRHQ':
+        print("\nError in option:", org_in)
+        return []
+    
+    if choice[0] in 'DRHQ':
+        if len(choice) == 1 :
+            return choice
+        else:
+            print("\nError in option:", org_in)
+            return []
+    
+    elif choice[0] == "F":
+        try:
+            x = int(choice[1]) -1
+            if 0 <= x <= 3: 
+                return ['F', x]
+            else:
+                print("\nError in option:", org_in)
+                return []
+        except:
+            print("\nError in option:", org_in)
+            return []
+    
+    elif choice[0] == "T":
+        try:
+            x = int(choice[1]) - 1
+            y = int(choice[2]) - 1
+            if 0 <= x <= 3 and 0 <= y <= 3:
+                return ['T', x, y]
+            else:
+                print("\nError in option:", org_in)
+                return []
+        except:
+            print("\nError in option:", org_in)
+            return []
+    else:
+        print("\nError in option:", org_in)
+        return []
+
+        
+def main():
+    print(RULES)
+    print(MENU)
+    deck, tab, found = init_game() #initalize the game
+    display(deck, tab, found) #display the game 
+    
+    while True:
+        user_input = get_option()#has the user input options
+        if user_input != []: #if the list is not empty
+            if user_input[0] == 'D': #if the inputted value is "D"
+                deal_to_tableau(tab, deck) #deal the cards out, the four cards at the top of the game
+            
+            elif user_input[0] == 'R': #if the inputted value is "R"
+                print("\n=========== Restarting: new game ============")
+                print(RULES)
+                print(MENU)
+                deck, tab, found = init_game() #initalize the game
+
+            
+            elif user_input[0] == 'H': #if the inputted value is "H"
+                print(MENU)
+            
+            elif user_input[0] == 'Q': #if the inputted value is "Q"
+                print("\nYou have chosen to quit.")
+                break
+            
+            elif user_input[0] == 'F': #if the inputted value is "F"
+                move_to_foundation(tab, found, user_input[1])
+            
+            elif user_input[0] == 'T': #if the inputted value is "T"
+                move_within_tableau(tab, user_input[1], user_input[2])
+            
+            if check_for_win(tab, deck): #checks to see if the function is true
+                print("\nYou won!")
+                break
+            
+            
+            display(deck, tab, found) #re-prints the display
+
+if __name__ == '__main__':
+     main()
